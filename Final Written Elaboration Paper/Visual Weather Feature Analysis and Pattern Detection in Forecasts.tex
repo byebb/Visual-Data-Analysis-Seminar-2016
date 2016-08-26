@@ -1,0 +1,352 @@
+% This is LLNCS.DOC the documentation file of
+% the LaTeX2e class from Springer-Verlag
+% for Lecture Notes in Computer Science, version 2.4
+\documentclass[citeauthoryear]{llncs}
+\usepackage{llncsdoc}
+\usepackage[sorting=none]{biblatex}
+\usepackage{graphicx}
+\usepackage{subcaption}
+\usepackage{enumitem}
+\usepackage{cleveref}
+\usepackage[dvipsnames]{xcolor}
+\definecolor{darkgreen}{HTML}{006400}
+
+\captionsetup{compatibility=false}
+\usepackage{sidecap}
+
+\usepackage{array}
+\newcolumntype{P}[1]{>{\centering\arraybackslash}p{#1}}
+
+\newcommand{\greensmall}[1]{\textcolor{darkgreen}{{\small #1}}}
+\newcommand{\redsmall}[1]{\textcolor{red}{{\small #1}}}
+
+\addbibresource{relatedwork.bib}
+%
+% TITLE DEFINITION
+\title{Visual Weather Feature Analysis and Pattern Detection in Forecasts}
+\subtitle{A Comparison of Weather Visualization Techniques}
+\author{Matthias Miller}
+\date{\today{}, Konstanz}
+\institute{University of Konstanz, Germany\\
+\email{matthias.miller@uni-konstanz.de}}
+
+\begin{document}
+\thispagestyle{empty}
+\let\cite\parencite
+
+\maketitle              % typeset the title of the contribution
+
+% Paper Start
+\begin{abstract}	
+%	The abstract should summarize the contents of the paper
+%	using at least 70 and at most 150 words. It will be set in 9-point
+%	font size and be inset 1.0 cm from the right and left margins.	
+%	There will be two blank lines before and after the Abstract. \dots
+	Weather forecasting is an important aspect for many application domains. In this work, we present two different approaches that visualize future conditions of the atmospheric state by the contribution of interactive user applications that implement the methods presented in each work. Subsequently, we illustrate some important challenges when it comes to present effective weather predictions, such as consistent information encoding or to appropriately picture the forecast uncertainty of various forecast models. Moreover, pattern and trend discovery within weather data is a fundamental aspect for forecasters. We compare the approaches and show how they solve topic-related issues. Finally, we notice what further can be done in this domain and remark problems that haven't be addressed so far.
+	\keywords{Weather features, visualization, forecast analysis.}
+\end{abstract}
+%
+
+\section{Introduction}
+%
+Weather forecasting is important for many application domains like hurricane estimation, air traffic and even farmers who need to sow at the right time to earn the most profitable harvest. Furthermore, in dry regions, like those in South Western USA, forests are endangered by wildfires, which should be prevented, if possible.
+Thus, meteorologists must be provided with visualization tools, which help them to make accurate predictions based on all available weather information. Even if a catastrophe can't be avoided, accurate precise weather predictions can be crucial for saving human lives. However, precise weather forecasting is complicated due to the influence of several characteristic meteorological variables (e.g. wind, temperature, wind speed, atmospheric pressure, etc.) whose future evolution can be calculated to a certain degree of accuracy by Numerical Weather Prediction models. The calculation becomes more inaccurate the later in time. For this reason, usually only a specific timespan is calculated, since vague weather predictions do not help meteorologists much to create correct forecasts of the atmospheric condition. The consideration of spatio-temporal patterns and trends within weather data is crucial for analysts and asks for powerful methods to examine existing forecasts. Besides, using visualization tools to analyze weather data facilitates their work significantly, since geographic correlations and characteristic weather features can be spotted more easily than just with numerical predictions. Mainly, often only static visualizations are utilized and created, because dynamic simulations are complex, computationally expensive, and are based on tons of data, which cannot processed by end users. Additionally, meteorologists rely on visual conventions to understand visualizations correctly, but many use different variable encoding techniques which may lead to misinterpretations. Because of the complex characteristics weather state and prediction visualizations must effectively encode the uncertainty of weather states by applying appropriate visualization techniques to support meteorologists as well as possible. Another important aspect is the determination of characteristic patterns within the data, which provide relevant insights regarding weather trends like the location of cold fronts or other significant artifacts. In this work, we present and compare two different techniques, which address the mentioned challenges differently. By evaluating these methods, we show the advantages and disadvantages of each approach and give suggestions how to combine them in a software to exploit the benefits of both concepts and which visualization should be applied to retrieve best results or are easier to understand by most researchers. Eventually, we consider that encoding conventions are a crucial part of every possible visualization to maintain consistent mappings of weather variables.
+
+%
+\section{Fundamentals}
+Before going into details, we introduce in this section all basic terms which are important to estimate visualization methods based on their quality and expressiveness. The following definitions can vary, but usually are consistent regarding their meaning and basic concepts. We provide examples for each term to illustrate for what they are normally applied on. Generally, this terminology provides an essential foundation to describe and assess any weather visualization tool. Based on the definition we can compare different visualization techniques and assess both their efficiency and efficacy. 
+\begin{figure}[h]
+	\centering
+	\begin{subfigure}[t]{0.4\textwidth}
+		\centering
+		\includegraphics[width=\linewidth]{figures/wind_barbs.JPG} 
+		\caption{Wind barbs: the flags are indicating wind speed and from where the wind is coming.The angle of the glyph encodes wind direction.}
+		\label{barbs}
+	\end{subfigure}%
+	~ ~ ~ ~
+	\begin{subfigure}[t]{0.55\textwidth}
+		\centering
+		\includegraphics[width=\linewidth]{figures/color_maps.JPG} 
+		\caption{Continuous and discrete color maps used to encode temperature, precipitation, and relative humidity.}
+		\label{colormaps}
+	\end{subfigure}
+	\caption{Different visual encoding conventions used for weather variables, which are often used to describe the atmospheric conditions \cite{quinan2016visually}.}
+\end{figure}
+\subsection{Terminology}
+\begin{description}
+\item[Variables:] \ \\
+Typically, weather forecasts consist of multiple \textit{variables}. Each variable should be visually encoded by integrating "existing meteorological conventions with visualization principles" \cite{quinan2016visually}. For example, to encode the direction and speed of wind, a meteorological convention would be to use wind barbs (see Figure \ref{barbs}), which are glyphs that encode the wind direction by the angle and the flags which are connected to the glyph indicate the wind velocity. Moreover the wind is coming from the direction the flags are facing. 
+Other variables are temperature, precipitation, relative humidity, and pressure (see Figure \ref{colormaps}). This list can be extended by other weather characteristics.  \\
+%\newpage
+\item[Fields:] \ \\
+A \textit{field} "refers to a particular variable at a particular height"\cite{quinan2016visually} (see Fig. \ref{wfields}). Moreover, a field usually holds a 2D grid of scalar values. However, a field can also be a composed by vector values. Generally, meteorologists weather use over 50 fields out of over hundred depending on their experience and application domain. They also provide the essential basis for derived fields.
+\vspace*{-0.5cm}
+\begin{SCfigure}
+	\centering
+	\includegraphics[width=0.5\textwidth]{figures/fields.png}
+	\caption{Weather fields can be visualized using independent layers for each field. In this example, temperature is encoded using the color map mentioned above. Another layer contains wind information encoded by wind barbs and displayed using a equidistant 2D grid of corresponding glyphs. Isocontours indiciate the location of same pressure levels of the atmosphere \cite{quinan2016visually}.}
+	\label{wfields}
+\end{SCfigure}
+\item[Derived Fields:] \ \\
+Based on standard fields, meteorologists can create mappings from several fields into a \textit{derived field} (see Fig. \ref{dfield}). For example, a derived field can be the result if statistical computations over multiple different forecast simulations (different start conditions, parameterization) like the \textit{mean}, \textit{standard deviation}, \textit{min}, or \textit{max} value \cite{quinan2016visually}.
+\vspace*{-0.5cm}
+\begin{SCfigure}
+	\centering
+	\includegraphics[width=0.6\textwidth, height=4.2cm]{figures/derived.png}	
+	\caption{Weather conditions can be visualized using derived fields. In this example, the color indicates "the potential for accelerated wildfire growth" (Haines Index), whereas the contour lines encode the \textit{Mean} of the relative humidity at a geopotential height of 2 meters \cite{quinan2016visually}. \label{dfield}}                   
+\end{SCfigure}
+\vspace*{-0.5cm}
+\newpage
+\item[Features:] \ \\
+\vspace*{-1cm}
+\begin{figure}[h!]
+	\begin{minipage}[t]{4.5cm}
+		\vspace{0pt}
+		"A \textit{feature} refers to a significant artifact, usually an event, trend, or boundary, than can be located within a given field" \cite{quinan2016visually}. E.g., if fields consist of scalar values, features are displayed using isocontours or gradients. For instance, weather fronts (e.g., cold front), low pressure systems or temperature boundaries are weather features, which can be visualized within their corresponding field. In Figure \ref{feature} the feature "temperature boundaries" is displayed.
+	\end{minipage}
+	\hfill
+	\begin{minipage}[t]{7.5cm}
+		\vspace{0pt}
+		\centering
+		\includegraphics[width=6.65cm]{figures/feature.png}
+		\caption{Weather Feature: Temperature boundaries indicated by colors using a discrete color map.}
+		\label{feature}
+	\end{minipage}
+\end{figure}
+%\vspace*{-0.5cm}
+\item[Weather Prediction Models:] \ \\
+There are two different kinds of weather prediction models: \textit{Deterministic Forecasts} are predictions, which contains only a single weather simulation, whereas \textit{Ensemble Forecasts} are composed of two or more simulations covering "overlapping geographical extents and predictive time frames" \cite{quinan2016visually} using different parameterizations and even models with differing initial or boundary conditions. The latter is more exact and allows meteorologists to get a better overview of the data and enables them to make profound decisions. Apart from that, this type of forecast leaves more space for interpretations compared to deterministic forecasts \cite{quinan2016visually}. Ensemble forecasts are divided into several \textit{members}, which each of them represents a possible forecast outcome. Consequently, all members only represent a subset of all possible outcomes. Based on this concept, we can approach the uncertainty of the real outcome by the probability considering all members. The more members support an outcome the higher is the probability that the related outcome will happen. Depending on the parameters, there may be different computation errors which can be reduced by using ensemble forecasts.
+%Weather forecasts always consist of certain \textbf{\textit{weather variables}}\\
+\end{description}
+%
+
+\section{Related Work}
+We consider related work by classifying three different aspects: weather prediction visualization systems, visualization of forecast uncertainty based on ensembles, and analysis of spatio-temporal patterns. We elicited these main aspects from both Diehl et al.'s \cite{diehl2015visual} and Quinan and Meyer's \cite{quinan2016visually} contribution, which are the focus of this elaboration and will be presented in section \ref{comparison}.
+
+\subsection{Weather Prediction Visualization Systems}
+There are numerous published frameworks and visualization applications, which address diverse challenges regarding both climatology and weather prediction. Operational tools as well as research methods are employed for various applications and domains, which partly enable users to control the variables to be visualized and their respective encoding \cite{gmt,metview}. For example, the NOAA National Centers for Environmental Prediction developed an extensive interactive computer system named \textit{Advanced Weather Interactive Processing System} (AWIPS) that integrates two-dimensional perspectives and facilitates meteorological data processing. Consequently, weather forecasters can more precisely prepare predictions on a timely basis \cite{awips}.  
+With the software tool \textit{Grid Analysis and Display System} (GrADS), Doty and Kinter provide an user interface to apply standard procedures meteorologists need to process geophysical data for their application problems. Accordingly, GrADS delivers "a powerful quantitative data analysis tool"\cite{grads} by integrating two-dimensional graphics to give analysts the opportunity to view their processed data results. An important aspect for any visualization system are the encoding techniques which are used to convey interesting and meaningful information in a effective manner. Unfortunately, thus far different applications used varying encodings which led to ambiguous visualizations. Beyond this, visualization principles should be taken into account as well but users must be trained to understand them correctly \cite{quinan2016visually}. Some tools mentioned before create static forecast graphics which can only contain a small portion of all elements users may need. Consequently, dynamic visualizations have the advantage that they can be viewed by using interactive techniques to highlight those parts a user is interested in. For example, Ware and Plumlee \cite{ware2013designing} worked on a method to show three different variables (two 2D scalar fields and one 2D vector field) using three different "perceptual channels" (color, texture, motion) in order to create representations which are easier to interpret than previous graphics. Previously, most often only one or two weather variables were considered to reduce visual interference. The conducted a survey with their both static and dynamic visualization that shows its superiority compared to glyph-based or other conventional solutions.
+
+\subsection{Forecast Uncertainty and Outcome Probability}
+Creating images or animations which contain future conditions or states of weather features entails the necessity to visualize information uncertainty in a reasonable manner. Calculations related to Numerical Weather Predictions represent only a little slice of the entirety of all possible outcomes. Therefore, the outcome probability should be rendered by using statistical methods based on ensembles to provide comprehensible visualizations for meteorologists. Additionally, comparison techniques are required to supply helpful methods to compare different members of an ensemble. Potter et al. developed a framework called EnsembleVis that utilizes multiple views containing separate attributes of an ensemble to mediate "key scientific insight" by having a "clearer presentation" on a higher "level of visual data analysis" \cite{potter2009ensemble}. Hence, EnsembleVis gives the opportunity to explore the relationship between single outcomes within an ensemble by emphasizing its probabilistic characteristics. To directly summarize ensembles of isocontours, Whittaker et al. proposed a method referred to as \textit{contour boxplot technique} \cite{whitaker2013contour}.  
+
+\subsection{Spatio-temporal patterns}
+Since weather predictions contain and are based on recurring patterns that originate from seasons or certain geographic characteristics, it is important to regard spatio-temporal patterns of forecasts. There has been a lot of studies in this domain: Aigner et al. analyzed different visualization of time-oriented data regarding their expressiveness and present how visualizations should be designed in order to effectively convey insight information about the underlying dataset \cite{aigner2011visualization}. With TimeSearcher, Hochheiser and Shneiderman propose an interactive tool which allows users to search time series data sets and guides the data mining process. By introducing a method, which facilitates the creation of query specifications by means of a direct-manipulation metaphor: timeboxes \cite{hochheiser2001interactive}. Another technique, called CloudLines \cite{krstajic2011cloudlines}, which was presented by Krstajic et al., utilizes distortion and temporal compression techniques to visualize large data amounts on a timeline. This interactive method is used to support the analysis of time-series event data, e.g., to track the exact order of multiple events. 
+
+\section{Weather Forecast Visualization and Analysis}
+\label{comparison}
+In this section, we first regard several problems and challenges which arise when it comes to visualize weather predictions and forecasts and displaying of different weather variables. Secondly, we present two different weather visualization techniques separately and more detailed, which subsequently will be compared.
+
+\subsection{Challenges of Weather Forecast Visualizations}
+\label{challenges}
+Weather forecast visualization researchers face miscellaneous difficulties at different levels. Therefore, these issues must be addressed appropriately to provide meteorologists with improved (interactive) tools to facilitate their work in order to create more exact weather prediction in a time- and resource-saving way. In the following, we list a subset of those problems (not concluding list), which shall be examined more accurate in relation to the different works from Diehl et al. \cite{diehl2015visual} and Quinan et al. \cite{quinan2016visually}, which we will regard afterwards.
+
+\begin{description}
+\item[\#1. Inconsistent and ineffective encoding techniques]  \ \\
+A major challenge of weather visualization is to take both current visual meteorological conventions and accepted visualization practices into account. Thereby, the deployment of certain encoding and visual channels are important, since they are a major aspect for helpful and meaningful weather presentations on a display. Meteorologists must be provided with visualizations that include multiple (three or even more) weather variables to give them the opportunity to view them simultaneously in a single graphic instead of three images each containing a separate variable. \\
+\vspace*{-0.5cm}
+\begin{figure}[h]
+	\centering
+	\begin{subfigure}[t]{0.45\textwidth}
+		\centering
+		\includegraphics[width=\linewidth]{figures/visualclutter} 
+		%		\caption{Concurrent presentation of temperature, geopotential heights, and wind fields. Extensive amount of visual clutter and interference that makes it difficult to read the visualization easily.}
+		\label{clutter}
+	\end{subfigure}%
+	~ ~ ~ ~
+	\begin{subfigure}[t]{0.5\textwidth}
+		\centering
+		\includegraphics[width=\linewidth]{figures/simultaneousdisplay} 
+		%		\caption{Simultaneous visual encoding of temperature, geopotential.}
+		\label{simultaneous}
+	\end{subfigure}
+	\vspace*{-0.5cm}
+	\caption{{\small These weather visualization were created by National Center for Environmental Protecation (NCEP, subsidiary of NOAA) and Unisys Weather. They include multiple weather features and variables by presenting them simultaneously each in a single display. Both visualizations encode temperature, geopotential heights, and wind fields by applying different encoding channels and techniques. Due to their static characteristic, there is extensive visual interference. These examples show some meteorological conventions to encode combinations of variables \cite{quinan2016visually}.\label{simul}}}
+\end{figure}
+\vspace*{-0.5cm} \ \\
+Figure \ref{simul} shows two static visualizations encoding three different weather variables simultaneously and indicates that static presentations suffer from strong visual clutter and makes it complicated to find and analyze features relationships. This becomes even harder when meteorologists want to compare members of an ensemble of a given weather forecasts, which most often can only be done indirectly \cite{quinan2016visually}. These considerations lead to the question: \textit{How can weather forecasts be effectively visualized?}\\
+\item[\#2. Direct comparison of multiple forecast outcomes] \ \\ 
+Meteorologists often need to compare several outcomes (isocontours) against each other and are usually provided with multiple images which contain only one outcome for each visualization. In this way, only indirect comparisons are possible between an ensemble of a weather variable. Therefore, meteorologists may benefit by a simplification to better understand the relations of separate members of an ensemble. \\
+\item[\#3. Outcome probability presentation] \ \\ 
+Based on multiple outcome calculations which regard several parameter settings and different starting conditions, the probability of a certain weather outcome may be approximated. Since, this only covers a small part of the entirety of all possible forecast outcomes, it is important to correctly inform users about the specific probability of all given outcomes of an ensemble. \\
+\item[\#4. Weather condition comparison at different points in time] \ \\ 
+The weather situation highly depends on specific time points and can vary heavily. Analysts are interested to find similarities and distinctions of weather forecasts and the corresponding atmospheric condition. Because of this, visualization of weather predictions should include methods that can be used to compare the same variable or feature at different time points to emphasize differences, if exist. This technique may also enable researchers to find characteristic elements which cause other events, so that they are able to create more precise weather forecasts. \\
+\item[\#5. Pattern and trend finding within the data] \ \\ 
+Weather prediction consist of 2D scalar fields, which can be further analyzed due to their numeric nature. Current visualization often must be examined explicitly in order to extract existing patterns and trends within those fields, but meteorologists could be supported to find interesting patterns automatically. Traditional displays don't have the opportunity to execute automatic pattern or trend analysis. Therefore, new techniques are required to address this need to find interesting features within the data automatically.\\
+\item[\#6. Temporal Evolution of weather conditions] \ \\ 
+Another important characteristic of weather forecast is the exact temporal evolution of the conditions: many domains, such as agriculture, highly depend on correct temperature predictions. For example, farmers often need to know the best time to plant their seed to receive a fruitful harvest. Consequently, meteorologists are interested in how the weather conditions evolve and change over time. By taking multiple weather variables into account, it might be even helpful to estimate the risk of nature disasters like hurricanes or wildfires.
+\end{description}
+
+\noindent The presented list is not concluding and might be extended by other aspects, which may arise at a later point. We focus specifically on these issues, since the following scientific works were created due to these challenges. Next, we are presenting two different interactive tools, which address the presented points that are mentioned above.
+
+\newpage
+\subsection{Visually Comparing Weather Features in Forecasts}
+The first of two papers, we want to compare, is from Quinan and Meyer \cite{quinan2016visually}. In their work they introduce an interactive open-source tool (WeaVER), which shall support meteorologic analysis by means of different visualization techniques, which will be more discussed in the subsequent paragraphs. \\
+
+\textbf{Research Questions and Goals}\ \\[0.2cm]
+Quinan and Meyer focused on and addressed two research questions:
+\begin{enumerate}
+\item How can \textit{combined weather features} be directly visualized in order to detect possible forecast outcomes by means of comparison?
+\item How to improve weather prediction by applying \textit{appropriate visualization techniques} to reduce mistakes in resulting forecasts?
+\end{enumerate}
+On the basis of these research questions, they defined multiple goals to address and solve the respective issues reasonably \cite{quinan2016visually}. 
+\begin{itemize}[label=$\bullet$]
+\item Create Short-Range Ensemble Forecasts (SREF) visualizations that enable effective visual comprehension of feature relationships built on Numerical Weather Predictions.
+\item Reduce inefficiency, inaccuracy and misinterpretations with the help of consistent information encoding that integrate meteorological conventions with accepted visualization principles.
+\item Generate weather prediction visualizations that include meaningful depiction of forecast uncertainty which is based on ensembles of possible forecast outcomes.
+\item Take advantage of the dynamic nature of interactive weather visualizations and build an open-source tool to support meteorologic analysis by regarding several practical challenges that occur when working with weather data.
+\end{itemize}
+
+\textbf{Functional Prototype Tool: WeaVER \cite{quinan2016visually}} \\[0.2cm]
+Based on the defined research questions and goals, Quinan and Meyer proposed an open-source application called \textbf{WeaVER} that includes weather prediction at 3-hour intervals up to 87 hours into the future. The data for the predictions stems from the NOAA Operational Model Archive and Distribution System (NOMADS) server (\texttt{nomads.ncep.noaa.gov}). WeaVER is developed to visualize Short-Range Ensemble Forecasts from NCEP (National Centers for Environmental Prediction) that includes 21 member simulations (7 separate sets of starting conditions, 3 different computation models). Users can interactively explore multiple weather features simultaneously and highlighting is used to guide user's attention to the important parts of the visualization on the basis of the user input (mouse motion). Furthermore, WeaVER even contains a forecast animation which illustrates the temporal evolution of the future weather conditions.\\
+\newpage
+\textbf{Three Cases of Informed Defaults \cite{quinan2016visually}} \\[0.2cm]
+To integrate existing meteorological conventions with effective visualization concepts, three cases of informed default encoding choices are suggested:
+\vspace*{-0.1cm}
+\begin{description}
+	\item[Case 1:] \ \\
+	Simultaneous display of \textit{independent} fields (deterministic/ensemble forecasts).\\
+	\begin{figure}[h!]
+		\vspace*{-0.9cm}
+		\begin{minipage}[t]{7.4cm}
+			\vspace{0pt}
+			\centering
+			\includegraphics[width=7.4cm]{figures/weaversimultan}
+			\caption{WeaVER can be used to view three different weather variables simultaneously. Bottom-right corner: start and stop animations.}
+			\label{weaversim}
+		\end{minipage}
+		~
+		\begin{minipage}[t]{4.6cm}
+			\vspace{0pt}
+			Meteorologists often need to consider multiple different weather variables to get a correct overview or the big-picture status of a forecast. Therefore, WeaVER was designed to give users the opportunity to view up to three different independent weather fields at the same time by using drag\&drop from the weather data library (see Fig. \ref{weaversim}: right-hand side). Figure \ref{weaversim} indicates how it looks like when a user views the weather fields: temperature (color map), wind (barbs), and geopotential heights (contour).
+		\end{minipage}
+		\vspace*{-0.5cm}
+	\end{figure}	
+	\item[Case 2:] \ \\
+	Simultaneous display of \textit{ensemble-derived} dependent variation/mean field.\\
+	
+	\begin{figure}[b]
+		\vspace*{-0.5cm}
+		\centering
+		\begin{subfigure}[t]{0.5\textwidth}
+			\centering
+			\includegraphics[width=\linewidth]{figures/spaghetti} 
+			\caption{{\small Spaghetti Plot: Set of isocontours with same color. Method lacks of occlusion and overlapping features.}}
+			\label{spaghetti}
+		\end{subfigure}%
+		~ 
+		\begin{subfigure}[t]{0.5\textwidth}
+			\centering
+			\includegraphics[width=\linewidth]{figures/boxplot} 
+			\caption{{\small Contour Boxplot \cite{whitaker2013contour}: Summarization of isocontour features from ensembles. Enables direct comparison of isocontours. }}
+			\label{boxplot}
+		\end{subfigure}
+		\vspace*{-0.2cm}
+		\caption{{\small  WeaVER integrates Spaghetti Plots and Contour Boxplots for Forecast Uncertainty Visualization \cite{quinan2016visually}.\label{uncertainty}}}
+		\vspace*{-0.8cm}
+	\end{figure}
+	\noindent \textit{Forecast Uncertainty} is an important aspect of weather predictions and should be visualized in a way that analysts can precisely understand the variations of multiple calculations. Forecast Uncertainty is growing with increasing prediction time frames and can be approximated by ensemble simulations. Moreover, it is a measure for the outcome probability which can be visualized using both mean and standard deviation of all ensemble members. These considerations demands for suitable visualization techniques. WeaVER incorporates two different approaches to visualize forecast uncertainty (see Fig. \ref{uncertainty}): The first method, called \textit{Spaghetti Plot} (see Fig. \ref{spaghetti}), is used to visualize sets of isocontours with the same color. Spaghetti plots often suffer from occlusion or overlapping features, thus feature relationships are frequently not effectively presented. In order to overcome this drawback, WeaVER contains a second method, which is called \textit{Contour Boxplot \cite{whitaker2013contour}} (see Fig. \ref{boxplot}), that provides scaling opportunities and can be seen as a summarization of isocontour features from an ensemble. By means of this method, users can better understand the forecast uncertainty due to visual cues that are more concisely displayed. Eventually, both Contour Boxplots and Spaghetti Plots enable the user to directly compare isocontours with the help of interactive highlighting.\\
+	
+	\item[Case 3:] \ \\
+	Display the \textit{uncalibrated probability} for a given event derived from ensembles.\\
+	
+	\begin{figure}[h!]
+		\vspace*{-0.9cm}
+		\begin{minipage}[t]{7.4cm}
+			\vspace{0pt}
+			\centering
+			\includegraphics[width=7.4cm]{figures/uncalib}
+			\caption{{\small Uncalibrated Probability for joint conditions. WeaVER provides the display the uncalibrated probability for both independent and joint conditions.}}
+			\label{uncalib}
+		\end{minipage}
+		~
+		\begin{minipage}[t]{4.6cm}
+		\vspace*{0.03cm}
+		For the purpose of representing the proportion of the ensemble members that predict a specific event or weather condition of concern, WeaVER has a built-in visualization that allows to show and combine single or multiple weather conditions on the map indicating the \textit{uncalibrated probability} for that event in each area. It is called \textbf{\textit{uncalibrated}}, since most ensembles "underestimate the true range of possible forecast outcomes" \cite{quinan2016visually} and therefore the result differs from the "actual expected frequency of the condition of event".
+		\end{minipage}
+		\vspace*{-0.5cm}
+	\end{figure}	
+\end{description}
+\vspace{-0.7cm}
+\subsection{Visual Analysis of Spatio-Temporal Data: Applications in Weather Forecasting -- Diehl et al.}
+
+The second paper we want to discuss is provided by Diehl et al. \cite{diehl2015visual}. They developed a visualization system named "Visual Interactive Dashboard" (VIDa) for the "analysis of spatio-temporal pattern in short-term weather forecasts". Diehl et al. provide many different functionalities to achieve high level interaction techniques to extract patterns, trends and errors in the weather forecast model. They linked a meteogram view with multiple views: a curve-pattern selector and a timeline with geo-referenced maps. \\
+
+\newpage
+\textbf{Research Questions and Goals}\ \\[0.2cm]
+Diehl et al. investigated the following research questions:
+
+\begin{enumerate}
+	\item How to \textit{visually compare} weather forecast outcomes? 
+	\item How to specify and search for \textit{meaningful patterns} in the weather data?
+	\item How to deploy visualization techniques to detect \textit{possible weather trends}?
+\end{enumerate}
+
+\begin{figure}[t]
+	\centering	
+	\includegraphics[width=\linewidth]{figures/vida} 
+	\caption{{\small Visual Interactive Dashboard (VIDa). Interactive web interface presenting a map with several linked windows that can be de/activated by the user. Functionalities: Date selector, variable selector, minimap timeline, webmap spatial filters, meteograms, curve-pattern selector, and operations \cite{diehl2015visual}. \label{vida}}}
+	\vspace*{-0.5cm}
+\end{figure}A tool was designed that incorporates many different techniques, which we will present in detail. The interactive application visualizes geo-spatial and time-related data and enables users to interrogate available information with diverse inquiry methods to extract valuable details. The \textbf{Visual Interactive Dashboard} (VIDa; see Fig. \ref{vida}) can be deployed for visual analysis of short term forecasts with 3-hour interval predictions with a total length of 48 hours \cite{diehl2015visual}. An aspect of particular importance in this paper relates to \textit{operational weather forecasting} that provides forecasters with easy-to-use methods for exploration weather data of 2D scalar-field grids and an interface for executing diverse (mathematical) operations with respect to time and space. VIDa facilitates user interaction like operations, comparison and application of spatial filters on multiple forecasts. Furthermore, VIDa allows users to get an overview of the future atmospheric state an the temporal evolution of weather conditions.\\
+
+\newpage
+{\large\textbf{Main Contributions}}\\[0.2cm]
+\textbf{Timeline with geo-referenced minimaps}\\[0.2cm]
+
+\begin{figure}[h!]
+	\vspace*{-0.9cm}	
+	\begin{minipage}[t]{4.6cm}		
+		\vspace*{0.03cm}
+		VIDa's minimap timeline (see Fig. \ref{geomaps}) shows 2D geo-referenced maps for desired time points that give an overview of the atmospheric conditions. Based on this visualization the user can detect interesting elements of the forecasts and can select any number minimaps for post processing with the forecast operation tool. The meteogram view (see Fig. \ref{vida} top) is linked with the timeline and can be viewed for detailed information of the several runs given in the minimap timeline. A minimap is a matrix (N$\times$M pixels based on longitude, latitude and resolution) that represents a 2D scalar-field meteorological variable including an appropriate geo-referenced projection.
+	\end{minipage}
+	~
+	\begin{minipage}[t]{7.4cm}
+		\vspace{0.1cm}
+		\centering
+		\includegraphics[width=\linewidth]{figures/geomaps} 
+		\caption{{\small Minimap timeline that provides an overview of 48-hour weather forecast with interactive user facilities: time navigation and minimap selection. The timeline contains multiple runs that can be compared by interactive selection. Supports users when identifying interesting events \cite{diehl2015visual}. \label{geomaps}}}
+	\end{minipage}
+	\vspace*{-0.5cm}
+\end{figure}
+\begin{figure}[b!]
+	\vspace*{-0.5cm}
+	\centering	
+	\includegraphics[width=\linewidth]{figures/curvepattern} 
+	\caption{{\small Curve-pattern analysis pipeline that consists of a user interaction part and an automatic algorithm which computes a visual result of the classification process in a separate visualization (minimap) \cite{diehl2015visual}. \label{curvepattern}}}
+	\vspace*{-0.5cm}
+\end{figure}
+
+\textbf{Curve-Pattern Selector} \\[0,2cm]
+The second key characteristic tool of VIDa is the curve-pattern selector, which allows operators to automatically detect certain weather phenomena by intuitively specifying pattern sketches in a 2D graph. Thereby, VIDa analyzes the chosen minimaps with regard to the defined pattern to find trends or weather features of particular meaning to the user. The result of the algorithm that compares and classifies the relation of multiple subsequent 2D scalar-fields is displayed in a separate view (see Fig. \ref{curvepattern}g). With this technique, experts can assess forecast uncertainty and produce more precise predictions.\\
+The user has to pass seven steps to retrieve results: First, multiple minimaps in arbitrary order must be selected that serve as input for the algorithm (see Fig. \ref{curvepattern}a). Then, the operation mode (trend analysis or forecast verification) and a user-specified pattern has to be assigned (see Fig. \ref{curvepattern}b). By declaring a delta value, the selector returns possible patterns which match the given curve (see Fig. \ref{curvepattern}c). After choosing a color scheme (see Fig. \ref{curvepattern}d) and a matching selected curve-pattern ((see Fig. \ref{curvepattern}e) that serves as classification pattern (see Fig. \ref{curvepattern}f), the automatic algorithm calculates and displays a visual minimap as a result in a separate layer (see Fig. \ref{curvepattern}g) \cite{diehl2015visual}.\\
+
+\textbf{Forecast operation tool} \\[0,2cm]
+The Visual Interactive Dashboard integrates a method for analysis of multiple forecasts based on the minimap timeline (see Fig. \ref{geomaps}): users can select any number of forecasts (vertical and horizontal) and apply mathematical operations such as subtraction, addition, and statistical operations as mean and standard deviation that can give valuable insights regarding the uncertainty of forecasts considering the distribution of ensemble predictions. For example, the standard deviation computation leads to good assessments of a forecast group of the same date and time. The addition operation can be used to accumulate the amount of precipitation over a certain time span and the subtraction operation is useful to analyze the evolution of temperature. With the forecast operation tool, meteorologists have the opportunity to explicitly search for changes in a requested time frame (e.g., temperature drop) \cite{diehl2015visual}.
+
+\section{Discussion \& Conclusion}
+In section \ref{challenges} we presented multiple challenges that arise when it comes to visualize weather forecasts. In the previous chapter two different interactive application were introduced, which solve the mentioned issues. With WeaVER, Quinan and Meyer provide a tool that overcomes inconsistent and ineffective encoding techniques by taking integrated meteorological conventions with visualization principles into account (\#1). Additionally, WeaVER makes direct comparison of multiple forecast outcomes possible with the help of Spaghetti Plots and Contour Boxplots in order to better assess the forecast uncertainty of an ensemble (\#2). Beyond that, the uncalibrated outcome probability visualization of WeaVER facilitates to estimate the likelihood whether a specific forecast will take place as predicted (\#3). Consequently, with WeaVER the challenges \#1--\#3 are addressed and solved. \\
+Diehl et al.s Visual Interactive Dashboard addresses the remaining issues \#4--\#6: The minimap timeline allows users to select weather forecasts of different time points and with the forecast operation tool users are able to compare the respective weather conditions (\#4). VIDa's curve-pattern selector can be applied on arbitrary forecast steps in order to automatically detect patterns, trends and anomalies within the data (\#5). Eventually, since VIDa's geo-referenced timeline of 2D minimaps contains multiple runs and forecasts at 3-hour intervals with a total length of 48 hours, the temporal evolution of the atmospheric state with respect to different meteorological variables can be analyzed and forecast outcomes can better be assessed.
+\subsection{Weather Visualization Method Comparison}
+Both Quinan and Meyer's open-source application WeaVER and Diehl et al's web user interface VIDa have their advantages and drawbacks. We summarize the main aspects of both works and show both methods in contrast to each other to outline what both methods are good for, what they have in common, and where the specific differences lie. 
+The table below contrasts both weather forecast visualization tools: We use color to indicate \textcolor{darkgreen}{positive (green color)} and \textcolor{red}{negative (red color)} characteristic attributes of the different methods.
+\vspace*{0.3cm}
+
+\hspace*{-0.5cm}\begin{tabular}{|>{\centering\arraybackslash\vspace{0.1cm}} m{6cm}|>{\centering\arraybackslash\vspace{0.1cm}} m{6cm}|}
+	\hline
+  WeaVER	&  VIDa\\\hline\hline
+	\multicolumn{2}{|>{\centering\arraybackslash\vspace{0.1cm}} m{12cm}|}{\greensmall{simple visual user interface}} \\\hline 
+	\multicolumn{2}{|>{\centering\arraybackslash\vspace{0.1cm}} m{12cm}|}{\greensmall{exploration of temporal evolution of weather features}} \\\hline 
+	\multicolumn{2}{|>{\centering\arraybackslash\vspace{0.1cm}} m{12cm}|}{\greensmall{short-term weather prediction}} \\\hline 
+	\greensmall{feature comparison across ensembles}&\redsmall{no ensemble visualizations} \\\hline
+	\redsmall{only one time point visualized}&\greensmall{direct comparison of different time points} \\\hline
+	\redsmall{no search for trends and patterns}&\greensmall{explicit pattern and trend analysis} \\\hline
+	\redsmall{no spatial scalability $\rightarrow$ only overview}&\greensmall{integrated spatial scalability (zoom)} \\\hline
+	\greensmall{simultaneous display of three variables}&\redsmall{only one variable displayed at a time} \\\hline
+	\greensmall{animation for temporal weather evolution}&\greensmall{mathematical operations on visualizations}	 \\\hline		
+\end{tabular}
+\subsection{Future Work}
+As we showed, both papers address problems and provide solutions for different challenges regarding weather forecast visualizations. Since both methods supply interactive applications we consider that an integration of WeaVER and VIDa into an improved interactive weather visualization interface that benefits from both approaches might be helpful to meteorologists and forecasters. To create a combination affords new design considerations and may be part of future scientific contributions. Besides that, there are still some challenges that haven't been considered from neither of both works. For example, no application is able to perform mathematical operations on ensembles or to compare the uncertainty at different time steps. Another interesting function would be a method that is able to find pattern or detect trends within multiple variables or features instead of only one variable. 
+%
+\printbibliography
+%
+\end{document}
